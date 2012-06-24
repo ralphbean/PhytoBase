@@ -1,0 +1,100 @@
+
+* Tables definition
+
+** DONE molecule
+
+| Title       | Type     | Primary | Nullable | Default | Comment                 |
+|-------------+----------+---------+----------+---------+-------------------------|
+| id          | Integer  | True    | False    |         |                         |
+| code        | Unicode  |         | False    |         |                         |
+| owner       | Integer  |         | False    |         | link from users         |
+| producer    | Integer  |         | False    |         | link from users         |
+| type        | Integer  |         | True     |         | link to molecules_types |
+| title       | Unicode  |         | True     |         |                         |
+| description | Unicode  |         | True     |         |                         |
+| smiles      | Unicode  |         | True     |         |                         |
+| inchi       | Unicode  |         | True     |         |                         |
+| add_date    | DateTime |         | True     |         |                         |
+| comment     | Unicode  |         | True     |         |                         |
+
+** DONE molecules_type
+| Title       | Type    | Primary | Nullable | Default |   |
+|-------------+---------+---------+----------+---------+---|
+| id          | Integer | True    | False    |         |   |
+| description | Unicode |         | False    |         |   |
+
+** DONE fraction
+
+| Title       | Type     | Primary | Nullable | Default |                 |
+|-------------+----------+---------+----------+---------+-----------------|
+| id          | Integer  | True    | False    |         |                 |
+| code        | Unicode  |         | False    |         |                 |
+| owner       | Integer  |         | False    |         | link from users |
+| producer    | Integer  |         | False    |         | link from users |
+| title       | Unicode  |         | True     |         |                 |
+| description | Unicode  |         | True     |         |                 |
+| add_date    | DateTime |         | True     |         |                 |
+| comment     | Unicode  |         | True     |         |                 |
+| mass        | Number   |         | True     |         |                 |
+| mass_left   | Number   |         | True     |         |                 |
+
+** DONE compound
+
+| Title       | Type     | Primary | Nullable | Default |                 |
+|-------------+----------+---------+----------+---------+-----------------|
+| id          | Integer  | True    | False    |         |                 |
+| code        | Unicode  |         | False    |         |                 |
+| owner       | Integer  |         | False    |         | link from users |
+| producer    | Integer  |         | False    |         | link from users |
+| title       | Unicode  |         | True     |         |                 |
+| description | Unicode  |         | True     |         |                 |
+| add_date    | DateTime |         | True     |         |                 |
+| comment     | Unicode  |         | True     |         |                 |
+| mass        | Number   |         | True     |         |                 |
+| mass_left   | Number   |         | True     |         |                 |
+
+** DONE experiment
+
+| Title       | Type     | Primary | Nullable | Default |                           |
+|-------------+----------+---------+----------+---------+---------------------------|
+| id          | Integer  | True    | False    |         |                           |
+| code        | Unicode  |         | False    |         |                           |
+| owner       | Integer  |         | False    |         | link from users           |
+| producer    | Integer  |         | False    |         | link from users           |
+| type        | Integer  |         | True     |         | link to experiments_types |
+| title       | Unicode  |         | True     |         |                           |
+| description | Unicode  |         | True     |         |                           |
+| add_date    | DateTime |         | True     |         |                           |
+| comment     | Unicode  |         | True     |         |                           |
+** DONE experiments_type
+| Title       | Type    | Primary | Nullable | Default |   |
+|-------------+---------+---------+----------+---------+---|
+| id          | Integer | True    | False    |         |   |
+| description | Unicode |         | False    |         |   |
+** DONE extract
+| Title       | Type     | Primary | Nullable | Default |                        |
+|-------------+----------+---------+----------+---------+------------------------|
+| id          | Integer  | True    | False    |         |                        |
+| code        | Unicode  |         | False    |         |                        |
+| owner       | Integer  |         | False    |         | link from users        |
+| producer    | Integer  |         | False    |         | link from users        |
+| type        | Integer  |         | True     |         | link to extracts_types |
+| title       | Unicode  |         | True     |         |                        |
+| description | Unicode  |         | True     |         |                        |
+| add_date    | DateTime |         | True     |         |                        |
+| comment     | Unicode  |         | True     |         |                        |
+| mass        | Number   |         | True     |         |                        |
+| mass_left   | Number   |         | True     |         |                        |
+
+** DONE extracts_type
+| Title       | Type    | Primary | Nullable | Default |   |
+|-------------+---------+---------+----------+---------+---|
+| id          | Integer | True    | False    |         |   |
+| description | Unicode |         | False    |         |   |
+
+** TODO bio
+** TODO analysis
+** TODO publications
+* Infos
+** MDP cryptés
+http://www.turbogears.org/1.0/docs/Identity/EncryptedPassword.html

@@ -1,0 +1,249 @@
+# -*- coding: utf-8 -*-
+"""Experiment Controller"""
+
+
+
+from tg import expose, flash, require, url, lurl, request, redirect
+from tg.i18n import ugettext as _, lazy_ugettext as l_
+from phytobase import model
+from repoze.what import predicates
+from phytobase.controllers.secure import SecureController
+from phytobase.model import DBSession, metadata
+from tgext.admin.tgadminconfig import TGAdminConfig
+from tgext.admin.controller import AdminController
+from tg.controllers import RestController, redirect
+from phytobase.lib.base import BaseController
+from phytobase.controllers.error import ErrorController
+from phytobase.model import *
+from sprox.formbase import AddRecordForm
+from tg import tmpl_context
+from tg import validate
+from datetime import datetime
+
+
+from tg.decorators import paginate
+
+from sqlalchemy import asc, desc
+
+import tw2.tinymce
+import tw2.jquery 
+import tw2.core as twc
+import tw2.dynforms
+import tw2.forms
+from tw2.jqplugins.jqgrid import SQLAjqGridWidget 
+from tw2.forms import TableForm, TextField,CalendarDatePicker,SingleSelectField, DataGrid
+from tw2.sqla import DbFormPage
+from tw2.jqplugins.select2 import * 
+from tw2.forms.datagrid import Column
+
+
+from sprox.tablebase import TableBase
+from sprox.fillerbase import TableFiller
+
+autoExperimentField = Select2MultipleSelectField(
+                   id='experiments',
+                   completionURL = '/fetch_experiments',
+                   fetchJSON = True,
+                   minChars = 1)
+
+autoOwnerField = Select2MultipleSelectField(
+                   id='owner',
+                   completionURL = '/fetch_users',
+                   fetchJSON = True,
+                   minChars = 1)
+
+
+class SortableColumn(Column):
+    def __init__(self, title, name):
+        super(SortableColumn, self).__init__(name)
+        self._title_ = title
+
+    def set_title(self, title):
+        self._title_ = title
+
+    def get_title(self):
+        current_ordering = request.GET.get('ordercol')
+        if current_ordering and current_ordering[1:] == self.name:
+            current_ordering = '-' if current_ordering[0] == '+' else '+'
+        else:
+            current_ordering = '+'
+        current_ordering += self.name
+
+        new_params = dict(request.GET)
+        new_params['ordercol'] = current_ordering
+
+        new_url = url(request.path_url, params=new_params)
+        return genshi.Markup('<a href="%(page_url)s">%(title)s</a>' % dict(page_url=new_url, title=self._title_))
+
+    title = property(get_title, set_title)
+# class ExperimentTable(TableBase):
+#     __model__ = Experiment
+#     __omit_fields__ = ['id', 'add_date','description']
+#     __xml_fields__ = ['fractions']
+    
+# experiment_table = ExperimentTable(DBSession);
+
+# class ExperimentTableFiller(TableFiller):
+#     __model__ = Experiment
+#     def fractions(self, obj):
+#        fractions = ', '.join(['<a href="/fractions/'+str(d.id)+'">'+d.code+'</a>'
+#                               for d in obj.fractions])
+#        return fractions.join(('<div>', '</div>'))
+
+# experiment_table_filler = ExperimentTableFiller(DBSession)
+
+class ExperimentWidget(Select2AjaxSingleSelectField):
+    attrs = dict(style='width: 400px')
+    options = []
+    opts = dict(
+        multiple=True,
+        placeholder="Select fractions",
+        minimumInputLength=1,
+        ajax=dict(
+            url="/fetch_fractions",
+            dataType="json",
+            data=twc.js_callback(
+                """
+                function (term, page) {
+                    return {
+                        q: term, // search term
+                
+                    };
+                }
+                """),
+            results=twc.js_callback(
+                """
+                function (data, page) {
+                    return {results: data.data};
+                }
+                """),
+            ),
+        formatSelection=twc.js_callback(
+            """
+            function (row) {
+                return row.code;
+            }
+            """),
+        formatResult=twc.js_callback(
+            """
+            function (row) {
+                return "<div>"+row.code+"</div>";
+            }
+            """),
+    )
+
+
+class AddExperiment(tw2.dynforms.CustomisedTableForm):
+    entity = model.Experiment
+    action = '/tw2_controllers/experiments_submit'
+    id = tw2.forms.HiddenField()
+    code = tw2.forms.TextField(validator=twc.Required)
+    title = tw2.forms.TextField()
+    comment = tw2.forms.TextField()
+    description = tw2.tinymce.TinyMCEWidget(
+        mce_options = dict(
+            mode = 'exact',
+            elements = 'description',
+            width = '100%',
+            height = '10em',
+            ))
+    fractions = ExperimentWidget()
+#     owner = autoOwnerField
+
+
+class ExperimentIndex(tw2.sqla.DbListPage):
+    entity = model.Experiment
+    title = "Experiments"
+    newlink = tw2.forms.LinkField(link='/experiments/new', text='New', value=1)
+    class child(tw2.dynforms.GrowingGridLayout):
+#        code = tw2.forms.LabelField()
+        id = tw2.forms.LinkField(link='/experiments/experiments?id=$', text='Edit', label="Operations")
+        code = tw2.forms.LinkField(link='/experiments/experiments?id=$id', text='$', label="Code")
+
+class GridWidget(SQLAjqGridWidget):
+    id = 'grid_widget'
+    entity = model.Experiment
+    excluded_columns = ['id']
+    prmFilter = {'stringResult': True, 'searchOnEnter': False}
+    pager_options = {"del": False,"edit": False, "search": False, "refresh": False, "add": False }
+    options = {
+        'url': '/experiments/db',
+        'rowNum':15,
+        'rowList':[15,30,50],
+        'viewrecords':True,
+        'imgpath': 'scripts/jqGrid/themes/green/images',
+        'width': 900,
+        'height': 'auto',
+    }   
+
+experiments_grid = DataGrid(fields=[
+        ('Code','code'),
+        ])
+
+__all__ = ['ExperimentController']
+
+
+class ExperimentController(RestController):
+#    @expose('json')
+#    def db(self, *args,**kwargs):
+#        return GridWidget.request(request).body
+    @expose('phytobase.templates.rest.experiments.get_all')
+    def get_all(self, *args,**kw):
+#        w = ExperimentIndex.req()
+ #       w.fetch_data(request)
+        data = DBSession.query(Fraction)
+#        mw = twc.core.request_local()['middleware']
+ #       mw.controllers.register(GridWidget,'db_jqgrid')
+        #${tmpl_context.widget(value=value)}
+        #tmpl_context.widget = experiment_table
+        #value = experiment_table_filler.get_value()
+        #return dict(widget=GridWidget,page="experiments")#(value=value)
+        return dict(page="experiments",grid=experiments_grid,data=data)#(value=value)
+
+    @expose('phytobase.templates.widget')
+    def new(self,*args, **kw):
+        w = AddExperiment()
+        return dict(widget=w,page="new")
+
+    @expose( )
+    @validate(
+#        form=add_experiment_form,
+#        error_handler=index,
+    )
+
+    def add_fraction( self, code, **named ):
+        """Create a new movie record"""
+        new = Fraction(
+            code = code,
+            add_date = datetime.now(),
+        )
+
+        if 'title' in named:
+            new.title=named['title']
+        if 'comment' in named:
+            new.comment=named['comment']
+        if 'mass' in named:
+            new.mass=named['mass']
+        if 'mass_left' in named:
+            new.mass_left=named['mass_left']
+
+        # Checking if the experiment exists
+        if 'description' in named:
+            query = DBSession.query(Experiment).filter_by(code=named['experiments'])
+            if query.count() != 0:
+                experiment_id = query.one()
+                new.experiments.append (experiment_id)
+
+        # Checking if the owner exists
+        if 'owner' in named:
+            query = User.by_user_name(named['owner'])#DBSession.query(User).filter_by(user_name=named['owner'])
+
+            if query != None:
+                new.owner.append(query)
+
+
+        DBSession.add( new )
+        flash( '''Added fraction: %s'''%( code, ))
+        redirect( './index' )
+
+      
