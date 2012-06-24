@@ -30,7 +30,6 @@ import tw2.jquery as twj
 import tw2.core as twc
 import tw2.dynforms as twd
 import tw2.forms as twf
-from tw2.jqplugins.jqgrid import SQLAjqGridWidget 
 from tw2.forms import TableForm, TextField,CalendarDatePicker,SingleSelectField, DataGrid
 from tw2.sqla import DbFormPage
 from tw2.jqplugins.select2 import * 
@@ -53,7 +52,6 @@ class FractionField(Select2AjaxSingleSelectField):
     opts = dict(
         placeholder="Select fractions",
         multiple=True,
-        tags=True,
         ajax=dict(
             url="/fetch_fractions",
             dataType="json",

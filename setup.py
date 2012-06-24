@@ -37,6 +37,14 @@ install_requires=[
     "repoze.what-quickstart",
     "repoze.what.plugins.sql>=1.0.1",
     "tw.forms",
+    "tw2.core",
+    "tw2.jquery",
+    "tw2.forms",
+    "tw2.dynforms",
+    "tw2.tinymce",
+    "tw2.sqla",
+    "tgext.crud",
+    "sprox",
     ]
 
 if sys.version_info[:2] == (2,4):
